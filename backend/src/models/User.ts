@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
+import { build_id } from "../utils/build_utils.js";
 const user_schema = new mongoose.Schema({
+  _id: {
+    type: String,
+    required: true,
+    default: "user_" + build_id(),
+  },
   user_name: {
     type: String,
     required: true,
@@ -10,17 +16,24 @@ const user_schema = new mongoose.Schema({
     required: true,
     index: true,
   },
-  user_password: {
+  user_pass: {
     type: String,
     required: true,
   },
-  user_otp_token: {
+  phone: {
+    type: Number,
+    required: true,
+  },
+  sign_otp_token: {
     type: String,
     default: null,
   },
   is_verified: {
     type: Boolean,
     default: false,
+  },
+  resto_location: {
+    type: String,
   },
   user_pass_token: {
     type: String,

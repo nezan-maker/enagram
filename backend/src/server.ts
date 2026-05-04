@@ -1,8 +1,9 @@
 import express from "express";
-import type { Request, Response, Express } from "express";
+import type { Express } from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import debug from "debug";
+import { prune_unauthorized } from "./config/db.js";
 
 import { connect_db } from "./config/db.js";
 
@@ -26,3 +27,4 @@ const startServer = async () => {
   }
 };
 startServer();
+prune_unauthorized();

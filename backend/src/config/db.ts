@@ -1,7 +1,7 @@
 import debug from "debug";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import User from "../models/Client.js";
+import User from "../models/User.js";
 
 dotenv.config();
 const db_log = debug("app:db");
@@ -28,5 +28,10 @@ export const connect_db = async () => {
 };
 
 export const prune_unauthorized = () => {
-  setTimeout(() => {});
+  setTimeout(
+    async () => {
+      const lost_users = await User.deleteMany({ is_verified: false });
+    },
+    10 * 60 * 1000,
+  );
 };
