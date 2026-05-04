@@ -1,13 +1,16 @@
 import express from "express";
 import type { Request, Response, Express } from "express";
 import dotenv from "dotenv";
+import morgan from "morgan";
 import debug from "debug";
+
 import { connect_db } from "./config/db.js";
 
 dotenv.config();
 const PORT = process.env.PORT;
 const server_log = debug("app:server");
 const app: Express = express();
+morgan("dev");
 const startServer = async () => {
   try {
     if (!PORT) {
