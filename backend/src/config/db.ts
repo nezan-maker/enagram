@@ -1,8 +1,9 @@
 import debug from "debug";
 import mongoose from "mongoose";
-import { on } from "node:cluster";
+import dotenv from "dotenv";
 import User from "../models/Client.js";
 
+dotenv.config();
 const db_log = debug("app:db");
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -12,14 +13,14 @@ export const connect_db = async () => {
   }
   let max_attempts = 5;
   try {
-    (mongoose.connection,
-      on("disconnect", async () => {
-        for (let attempt = 0; attempt < max_attempts; attempt++) {
-          await mongoose.connect(MONGO_URI);
-        }
-      }));
+    mongoose.connection.on("disconnect", async () => {
+      for (let attempt = 0; attempt < max_attempts; attempt++) {
+        await mongoose.connect(MONGO_URI);
+      }
+    });
 
     await mongoose.connect(MONGO_URI);
+    db_log("Database connected");
   } catch (error) {
     console.error(error);
     db_log("Database could not connect");

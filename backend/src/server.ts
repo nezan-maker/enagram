@@ -1,9 +1,10 @@
 import express from "express";
 import type { Request, Response, Express } from "express";
-import { errorMonitor } from "node:events";
+import dotenv from "dotenv";
 import debug from "debug";
 import { connect_db } from "./config/db.js";
 
+dotenv.config();
 const PORT = process.env.PORT;
 const server_log = debug("app:server");
 const app: Express = express();
@@ -21,3 +22,4 @@ const startServer = async () => {
     console.error(error);
   }
 };
+startServer();

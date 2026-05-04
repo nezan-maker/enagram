@@ -1,59 +1,30 @@
-import mongoose from "mongoose";
 import debug from "debug";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
+import User from "../models/Client.js";
 dotenv.config();
-export const dbDebug = debug("app:db");
-let listenersAttached = false;
-function attachConnectionListeners() {
-    if (listenersAttached) {
-        return;
-    }
-    listenersAttached = true;
-    mongoose.connection.on("connected", () => {
-        dbDebug("MongoDB connected");
-    });
-    mongoose.connection.on("reconnected", () => {
-        dbDebug("MongoDB reconnected");
-    });
-    mongoose.connection.on("disconnected", () => {
-        dbDebug("MongoDB disconnected");
-    });
-    mongoose.connection.on("error", (error) => {
-        dbDebug("MongoDB connection error");
-        dbDebug(error);
-    });
-}
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-const connectDB = async () => {
-    const { MONGO_URI } = process.env;
+const db_log = debug("app:db");
+const MONGO_URI = process.env.MONGO_URI;
+export const connect_db = async () => {
     if (!MONGO_URI) {
-        throw new Error("MONGO_URI is not set");
+        throw new Error("Could not load database key");
     }
-    attachConnectionListeners();
-    const maxAttempts = 5;
-    let lastError = null;
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-        try {
-            await mongoose.connect(MONGO_URI, {
-                serverSelectionTimeoutMS: 15000,
-                socketTimeoutMS: 45000,
-                maxPoolSize: 20,
-                minPoolSize: 1,
-            });
-            return;
-        }
-        catch (error) {
-            lastError = error;
-            dbDebug(`Error connecting to database (attempt ${attempt}/${maxAttempts})`);
-            dbDebug(error);
-            if (attempt < maxAttempts) {
-                await delay(2000 * attempt);
+    let max_attempts = 5;
+    try {
+        mongoose.connection.on("disconnect", async () => {
+            for (let attempt = 0; attempt < max_attempts; attempt++) {
+                await mongoose.connect(MONGO_URI);
             }
-        }
+        });
+        await mongoose.connect(MONGO_URI);
+        db_log("Database connected");
     }
-    throw lastError ?? new Error("Unable to connect to MongoDB");
+    catch (error) {
+        console.error(error);
+        db_log("Database could not connect");
+    }
 };
-export default connectDB;
+export const prune_unauthorized = () => {
+    setTimeout(() => { });
+};
 //# sourceMappingURL=db.js.map
