@@ -1,0 +1,75 @@
+# ── Enagram Restaurant OS ──
+# Orchestrates: MongoDB, Backend (Express), Frontend (React/Vite)
+
+services:
+
+  # ── Database ──
+  mongodb:
+    image: mongo:7
+    container_name: enagram-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Backend API ──
+  backend:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: enagram-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - ../.env
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - MONGO_URI=mongodb://mongodb:27017/enagram
+      - UPLOAD_DIR=/app/dist/uploads
+    volumes:
+      - uploads_data:/app/dist/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── Frontend SPA ──
+  frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      # VITE_API_URL is baked into the JS bundle at build time
+      args:
+        - VITE_API_URL=http://localhost:4000/api/v1
+    container_name: enagram-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5173/').then(r=>process.exit(r.ok?0:1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  mongodb_data:
+    driver: local
+  uploads_data:
+    driver: local
