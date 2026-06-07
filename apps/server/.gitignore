@@ -4,3 +4,8 @@ uploads/
 .env
 *.log
 .DS_Store
+debug_*
+**/debug_*
+test_api.*
+test_*.mjs
+verify_*
