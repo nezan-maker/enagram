@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Logo } from '../../components/ui/Logo';
@@ -8,6 +8,8 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { restaurantApi } from '../../api/restaurant.api';
 import { menuApi } from '../../api/menu.api';
 import { reviewApi } from '../../api/review.api';
+import { orderApi } from '../../api/order.api';
+import { useAuthStore } from '../../store/auth.store';
 
 interface MenuItem {
   _id: string;
@@ -34,13 +36,26 @@ interface Review {
   user?: { firstName: string; lastName: string };
 }
 
+interface CartItem {
+  menuItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 export const RestaurantDetail = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const [restaurant, setRestaurant] = useState<any>(null);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [placing, setPlacing] = useState(false);
+  const [placed, setPlaced] = useState(false);
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -49,7 +64,6 @@ export const RestaurantDetail = () => {
       .then((r) => {
         if (!r) { setError(true); setLoading(false); return; }
         setRestaurant(r);
-        // Fetch menus and reviews using the restaurant _id
         const rid = r._id;
         Promise.all([
           menuApi.list(rid).then((res) => res.data?.data || []).catch(() => []),
@@ -62,6 +76,55 @@ export const RestaurantDetail = () => {
       })
       .catch(() => { setError(true); setLoading(false); });
   }, [slug]);
+
+  const addToCart = useCallback((item: MenuItem) => {
+    setCart((prev) => {
+      const existing = prev.find((ci) => ci.menuItemId === item._id);
+      if (existing) {
+        return prev.map((ci) =>
+          ci.menuItemId === item._id ? { ...ci, quantity: ci.quantity + 1 } : ci
+        );
+      }
+      return [...prev, { menuItemId: item._id, name: item.name, price: item.price, quantity: 1 }];
+    });
+    setShowCart(true);
+  }, []);
+
+  const updateQty = useCallback((menuItemId: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((ci) => (ci.menuItemId === menuItemId ? { ...ci, quantity: ci.quantity + delta } : ci))
+        .filter((ci) => ci.quantity > 0)
+    );
+  }, []);
+
+  const placeOrder = useCallback(async () => {
+    if (!isAuthenticated) { navigate('/auth/login'); return; }
+    if (!restaurant || cart.length === 0) return;
+    setPlacing(true);
+    try {
+      await orderApi.create({
+        restaurantId: restaurant._id,
+        type: 'DINE_IN',
+        items: cart.map((ci) => ({
+          menuItemId: ci.menuItemId,
+          name: ci.name,
+          price: ci.price,
+          quantity: ci.quantity,
+        })),
+      });
+      setPlaced(true);
+      setCart([]);
+      setShowCart(false);
+    } catch {
+      // Error handled by api interceptor
+    } finally {
+      setPlacing(false);
+    }
+  }, [isAuthenticated, navigate, restaurant, cart]);
+
+  const cartTotal = cart.reduce((sum, ci) => sum + ci.price * ci.quantity, 0);
+  const cartCount = cart.reduce((sum, ci) => sum + ci.quantity, 0);
 
   if (loading) {
     return (
@@ -88,7 +151,6 @@ export const RestaurantDetail = () => {
     );
   }
 
-  // Aggregate all menu items across menus for display
   const allItems = menus.flatMap((m) => m.items || []);
   const categories = [...new Set(allItems.map((i) => i.category || 'Main'))];
 
@@ -97,13 +159,11 @@ export const RestaurantDetail = () => {
     : 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=80';
 
   return (
-    <div className="animate-in">
+    <div className="animate-in pb-32">
       {/* Hero */}
       <div className="relative w-full h-[360px]">
         <img src={coverImage} alt={restaurant.name} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
-
-        {/* Logo overlapping hero/content boundary */}
         <div className="absolute -bottom-9 left-8 w-20 h-20 rounded-full bg-surface border-4 border-surface flex items-center justify-center shadow-lg">
           <Logo size={40} className="text-primary-container" />
         </div>
@@ -121,10 +181,7 @@ export const RestaurantDetail = () => {
               </span>
             )}
             {restaurant.cuisineType?.length > 0 && (
-              <>
-                <span className="text-on-surface-variant/30">·</span>
-                <span>{restaurant.cuisineType.join(', ')}</span>
-              </>
+              <><span className="text-on-surface-variant/30">·</span><span>{restaurant.cuisineType.join(', ')}</span></>
             )}
             <span className="text-on-surface-variant/30">·</span>
             <span className="flex items-center gap-1.5">
@@ -145,7 +202,21 @@ export const RestaurantDetail = () => {
         </div>
 
         {/* Menu Sections */}
-        {menus.length === 0 ? (
+        {placed ? (
+          <div className="py-12 text-center space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-full bg-success/20 flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a5d6a7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h2 className="text-headline-md text-on-surface font-bold">Order Placed!</h2>
+            <p className="text-body-md text-on-surface-variant/60">Your order has been sent to the restaurant.</p>
+            <div className="flex gap-3 justify-center pt-2">
+              <Button onClick={() => setPlaced(false)} variant="ghost">Order More</Button>
+              <Link to="/client/orders"><Button>View Orders</Button></Link>
+            </div>
+          </div>
+        ) : menus.length === 0 ? (
           <EmptyState
             title="Menu coming soon"
             description="This restaurant hasn't published their menu yet."
@@ -161,41 +232,57 @@ export const RestaurantDetail = () => {
                     {category}
                   </h2>
                   <div className="space-y-3">
-                    {items.map((item) => (
-                      <div
-                        key={item._id}
-                        className="group p-4 rounded-container hover:bg-white/5 transition-all duration-200 flex items-center gap-4"
-                      >
-                        {/* Item image (or placeholder) */}
-                        <div className="w-16 h-16 rounded-ui bg-surface-container-high overflow-hidden shrink-0">
-                          {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-on-surface-variant/20">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          )}
+                    {items.map((item) => {
+                      const inCart = cart.find((ci) => ci.menuItemId === item._id);
+                      return (
+                        <div
+                          key={item._id}
+                          className="group p-4 rounded-container hover:bg-white/5 transition-all duration-200 flex items-center gap-4"
+                        >
+                          <div className="w-16 h-16 rounded-ui bg-surface-container-high overflow-hidden shrink-0">
+                            {item.image ? (
+                              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-on-surface-variant/20">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <h3 className="font-semibold text-on-surface">{item.name}</h3>
+                            {item.description && (
+                              <p className="text-body-sm text-on-surface-variant/60 line-clamp-2">{item.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0">
+                            <span className="font-bold text-on-surface">R {item.price?.toFixed(2)}</span>
+                            {inCart ? (
+                              <div className="flex items-center gap-2 bg-primary-container/10 rounded-ui px-2 py-1">
+                                <button
+                                  onClick={() => updateQty(item._id, -1)}
+                                  className="w-7 h-7 rounded-full bg-primary-container/20 text-primary-container font-bold hover:bg-primary-container/30 transition-colors"
+                                >−</button>
+                                <span className="w-6 text-center font-semibold text-on-surface">{inCart.quantity}</span>
+                                <button
+                                  onClick={() => addToCart(item)}
+                                  className="w-7 h-7 rounded-full bg-primary-container/20 text-primary-container font-bold hover:bg-primary-container/30 transition-colors"
+                                >+</button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => addToCart(item)}
+                                className="opacity-0 group-hover:opacity-100 transition-all duration-200"
+                              >
+                                Add
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        {/* Item info */}
-                        <div className="flex-1 min-w-0 space-y-0.5">
-                          <h3 className="font-semibold text-on-surface">{item.name}</h3>
-                          {item.description && (
-                            <p className="text-body-sm text-on-surface-variant/60 line-clamp-2">{item.description}</p>
-                          )}
-                        </div>
-                        {/* Price + action */}
-                        <div className="flex items-center gap-4 shrink-0">
-                          <span className="font-bold text-on-surface">R {item.price?.toFixed(2)}</span>
-                          {item.isAvailable !== false && (
-                            <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
-                              Add
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               );
@@ -240,6 +327,39 @@ export const RestaurantDetail = () => {
           </section>
         )}
       </div>
+
+      {/* Floating Cart Bar */}
+      {cartCount > 0 && !placed && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-surface border-t border-white/10 z-50">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+            <button onClick={() => setShowCart(!showCart)} className="flex items-center gap-2 text-on-surface">
+              <span className="bg-primary-container text-on-primary w-6 h-6 rounded-full flex items-center justify-center text-label-sm font-bold">{cartCount}</span>
+              <span className="text-body-md font-semibold">Cart · R {cartTotal.toFixed(2)}</span>
+              <svg className={`transition-transform ${showCart ? 'rotate-180' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <Button onClick={placeOrder} disabled={placing} size="lg" className="px-10">
+              {placing ? 'Placing Order...' : 'Place Order'}
+            </Button>
+          </div>
+          {/* Cart Detail Dropdown */}
+          {showCart && (
+            <div className="max-w-5xl mx-auto mt-3 pt-3 border-t border-white/5 space-y-2">
+              {cart.map((ci) => (
+                <div key={ci.menuItemId} className="flex items-center justify-between text-body-sm text-on-surface-variant/80">
+                  <span className="truncate">{ci.name} × {ci.quantity}</span>
+                  <span className="font-medium text-on-surface">R {(ci.price * ci.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-body-md font-bold text-on-surface pt-2 border-t border-white/5">
+                <span>Total</span>
+                <span>R {cartTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
