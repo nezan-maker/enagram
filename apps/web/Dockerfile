@@ -14,7 +14,10 @@ RUN corepack enable && corepack prepare pnpm@11 --activate
 
 # Copy manifest files first (layer caching)
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+# pnpm v11: install without build scripts → approve them → reinstall with builds
+RUN pnpm install --ignore-scripts && \
+    pnpm approve-builds --all && \
+    pnpm install
 
 COPY tsconfig.json vite.config.ts index.html postcss.config.mjs ./
 COPY public/ ./public/
