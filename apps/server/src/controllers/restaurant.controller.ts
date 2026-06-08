@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/authenticate.js';
 import * as svc from '../services/restaurant.service.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
+import { uploadToCloudinary } from '../middleware/upload.js';
 
 export const list = asyncHandler(async (_req: Request, res: Response) => {
   const data = await svc.listPublic();
@@ -49,10 +50,10 @@ export const uploadMedia = asyncHandler(async (req: AuthRequest, res: Response) 
   if (!req.file) {
     throw new ApiError(400, 'No image file provided');
   }
-  const imageUrl = `/uploads/images/${req.file.filename}`;
   const field = req.body.field === 'logo' ? 'logo' : 'coverImage';
-  const data = await svc.update(req.params.id as string, req.user!._id, req.user!.role, { [field]: imageUrl });
+  const cloudinaryResult = await uploadToCloudinary(req.file.buffer, 'enagram/restaurants');
+  const data = await svc.update(req.params.id as string, req.user!._id, req.user!.role, { [field]: cloudinaryResult.url });
   data.isProfileComplete = true;
   await data.save();
-  res.json(ApiResponse(200, 'Media uploaded', { url: imageUrl, restaurant: data }));
+  res.status(200).json(ApiResponse(200, 'Media uploaded', { url: cloudinaryResult.url, restaurant: data }));
 });
