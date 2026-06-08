@@ -6,6 +6,7 @@ uploads/
 .DS_Store
 debug_*
 **/debug_*
+extract_*
 test_api.*
 test_*.mjs
 verify_*
