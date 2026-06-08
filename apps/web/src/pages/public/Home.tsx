@@ -66,7 +66,7 @@ export const Home = () => {
   return (
     <div className="space-y-12 animate-in">
       {/* Hero Section — full-viewport cinematic */}
-      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative w-full min-h-[70vh] flex items-center justify-center overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
           style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&q=85)' }}
