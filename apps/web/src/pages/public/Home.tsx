@@ -65,31 +65,42 @@ export const Home = () => {
 
   return (
     <div className="space-y-12 animate-in">
-      {/* Hero Section */}
-      <section className="relative w-full h-[500px] flex items-center justify-center overflow-hidden">
+      {/* Hero Section — full-viewport cinematic */}
+      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80)' }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
+          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&q=85)' }}
         />
-        <div className="absolute inset-0 bg-surface/70 backdrop-blur-[1px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface/60 via-surface/50 to-surface/90 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
 
-        <div className="relative z-10 text-center space-y-6 max-w-2xl mx-auto px-6">
-          <div className="page-hero-glow" />
-          <span className="text-label-caps text-primary-container tracking-[0.15em]">PREMIUM DISCOVERY SYSTEM</span>
-          <h1 className="text-display text-on-surface leading-tight">
-            Discover restaurants<br />that define the meal.
+        <div className="relative z-10 text-center space-y-8 max-w-3xl mx-auto px-6 -mt-16">
+          <div className="page-hero-glow opacity-80" />
+          <span className="inline-block text-label-caps tracking-[0.2em] text-primary-container bg-primary-container/10 px-4 py-2 rounded-full border border-primary-container/20">
+            PREMIUM DISCOVERY SYSTEM
+          </span>
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-on-surface leading-[1.1] tracking-tight">
+            Discover restaurants<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-container to-primary">that define the meal.</span>
           </h1>
-          <p className="text-body-lg text-on-surface-variant/70">{cuisineTags.length} cuisines across {restaurants.length} venues.</p>
+          <p className="text-body-lg md:text-headline-sm text-on-surface-variant/60 max-w-xl mx-auto">
+            {cuisineTags.length} cuisines across {restaurants.length} venues.
+          </p>
 
-          <div className="flex gap-3 justify-center mt-8">
-            <Button size="lg" className="px-8">Browse Restaurants</Button>
+          <div className="flex gap-4 justify-center mt-10">
+            <Button size="lg" className="px-10 py-4 text-headline-sm font-bold shadow-xl shadow-primary-container/25 hover:shadow-2xl hover:shadow-primary-container/30 transition-all duration-300">
+              Browse Restaurants
+            </Button>
             <Link to="/auth/register">
-              <Button variant="ghost" size="lg" className="px-8 text-on-surface-variant hover:text-on-surface">
+              <Button variant="ghost" size="lg" className="px-10 py-4 text-headline-sm text-on-surface-variant hover:text-on-surface border border-white/10 hover:border-white/20 transition-all duration-300">
                 Sign up free
               </Button>
             </Link>
           </div>
         </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-surface to-transparent" />
       </section>
 
       {/* Cuisine Filters — segmented control */}
