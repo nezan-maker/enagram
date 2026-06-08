@@ -85,18 +85,16 @@ export const markPaid = async (orderId: string, paymentMethod: string) => {
   return order;
 };
 
-export const cancel = async (orderId: string) => {
+export const cancel = async (orderId: string, changedBy: string) => {
   const order = await Order.findById(orderId);
   if (!order) throw new ApiError(404, 'Order not found');
 
-  if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
-    throw new ApiError(400, `Cannot cancel order in ${order.status} state`);
-  }
+  validateTransition(order.status, 'CANCELLED');
 
   order.status = 'CANCELLED';
   order.statusHistory.push({
     status: 'CANCELLED',
-    changedBy: order.clientId!,
+    changedBy: new Types.ObjectId(changedBy),
     changedAt: new Date(),
   });
 

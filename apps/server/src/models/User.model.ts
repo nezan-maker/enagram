@@ -1,33 +1,9 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
+import { IUser } from '../types/user.types';
 
-export interface IUser extends Document {
-  email: string;
-  password: string;
-  role: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  avatar?: string;
-  isActive: boolean;
-  isPasswordSet: boolean;
-  staffId?: string;
-  restaurantId?: Types.ObjectId;
-  refreshToken?: string;
-  savedAddresses?: IAddress[];
-  favouriteRestaurants?: Types.ObjectId[];
-  loyaltyPoints?: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export interface IUserDocument extends IUser, Document {}
 
-export interface IAddress {
-  label: string;
-  street: string;
-  city: string;
-  coordinates?: { lat: number; lng: number };
-}
-
-const addressSchema = new Schema<IAddress>({
+const addressSchema = new Schema({
   label: { type: String, required: true },
   street: { type: String, required: true },
   city: { type: String, required: true },
@@ -37,7 +13,7 @@ const addressSchema = new Schema<IAddress>({
   },
 }, { _id: false });
 
-const userSchema = new Schema<IUser>({
+const userSchema = new Schema<IUserDocument>({
   email: { type: String, sparse: true, unique: true },
   password: { type: String, required: false },
   role: { type: String, required: true, enum: ['OWNER', 'DEPUTY_MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'KITCHEN_MANAGER', 'CHEF', 'WAITER', 'CLIENT'] },
@@ -54,5 +30,7 @@ const userSchema = new Schema<IUser>({
   favouriteRestaurants: [{ type: Schema.Types.ObjectId, ref: 'Restaurant' }],
   loyaltyPoints: { type: Number, default: 0 },
 }, { timestamps: true });
+
+userSchema.index({ restaurantId: 1, role: 1 });
 
 export const User = mongoose.model<IUser>('User', userSchema);

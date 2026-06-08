@@ -25,8 +25,8 @@ export const Login = () => {
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { email, password });
-      const { user, accessToken, refreshToken, restaurantId } = res.data.data as { user: Record<string, unknown>; accessToken: string; refreshToken: string; restaurantId?: string };
-      login({ user, accessToken, refreshToken, restaurantId });
+      const { user, accessToken, restaurantId } = res.data.data as { user: Record<string, unknown>; accessToken: string; restaurantId?: string };
+      login({ user, accessToken, restaurantId });
       const defaultRoute = (user.role === 'OWNER' ? '/owner/dashboard' : '/client/dashboard');
       navigate(defaultRoute);
     } catch (err: any) {

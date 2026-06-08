@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { useAuthStore } from '../../store/auth.store';
 import api from '../../api/axios';
 
 interface StaffMember {
@@ -29,8 +27,6 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export const OwnerStaff = () => {
-  const navigate = useNavigate();
-  const { user } = useAuthStore();
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState<string>('');
   const [staff, setStaff] = useState<StaffMember[]>([]);

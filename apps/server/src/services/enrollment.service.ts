@@ -113,12 +113,24 @@ export const updateStaff = async (restaurantId: string, userId: string, data: Pa
   return user;
 };
 
-export const deactivateStaff = async (restaurantId: string, userId: string) => {
+export const requestDeactivation = async (restaurantId: string, userId: string, requestedBy: string) => {
   const user = await User.findOne({ _id: userId, restaurantId: new Types.ObjectId(restaurantId) });
   if (!user) throw new ApiError(404, 'Staff member not found');
+  const approval = await ApprovalRequest.create({
+    restaurantId: new Types.ObjectId(restaurantId),
+    requestedBy: new Types.ObjectId(requestedBy),
+    approverRole: 'DEPUTY_MANAGER',
+    type: 'STAFF_TERMINATION',
+    payload: { userId, firstName: user.firstName, lastName: user.lastName, role: user.role },
+    status: 'PENDING',
+  });
+  return { message: 'Deactivation requires approval. Request submitted to Deputy Manager.', approval };
+};
 
-  // Deactivation requires approval (STAFF_TERMINATION) — handled in approval service
-  // For now, mark as inactive directly (approval gate will be enforced via route)
+// Called only from approval.service.resolve() when STAFF_TERMINATION is APPROVED
+export const executeDeactivation = async (restaurantId: string, userId: string) => {
+  const user = await User.findOne({ _id: userId, restaurantId: new Types.ObjectId(restaurantId) });
+  if (!user) throw new ApiError(404, 'Staff member not found');
   user.isActive = false;
   await user.save();
   return user;

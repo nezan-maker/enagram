@@ -25,4 +25,7 @@ const approvalSchema = new Schema<IApprovalRequest>({
   resolvedAt: Date,
 }, { timestamps: true });
 
+approvalSchema.index({ restaurantId: 1, status: 1 });
+approvalSchema.index({ requestedBy: 1 });
+
 export const ApprovalRequest = mongoose.model<IApprovalRequest>('ApprovalRequest', approvalSchema);

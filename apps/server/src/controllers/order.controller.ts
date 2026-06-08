@@ -36,6 +36,6 @@ export const markPaid = asyncHandler(async (req: AuthRequest, res: Response) => 
 });
 
 export const cancel = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const data = await svc.cancel(req.params.id as string);
+  const data = await svc.cancel(req.params.id as string, req.user!._id);
   res.json(ApiResponse(200, 'Order cancelled', data));
 });

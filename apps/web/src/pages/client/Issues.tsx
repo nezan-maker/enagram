@@ -2,11 +2,9 @@ import { useState, useEffect, FormEvent } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusPill } from '../../components/ui/StatusPill';
-import { useAuthStore } from '../../store/auth.store';
 import api from '../../api/axios';
 
 export const ClientIssues = () => {
-  const user = useAuthStore((s) => s.user);
   const [issues, setIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -21,7 +19,7 @@ export const ClientIssues = () => {
         const data = res.data.data;
         if (Array.isArray(data)) setIssues(data);
       })
-      .catch(() => {})
+      .catch(() => { /* noop */ })
       .finally(() => setLoading(false));
   }, []);
 
@@ -34,10 +32,9 @@ export const ClientIssues = () => {
       setShowForm(false);
       setTitle('');
       setDescription('');
-      // Refresh
       const res = await api.get('/issues/mine');
       if (Array.isArray(res.data.data)) setIssues(res.data.data);
-    } catch {} finally {
+    } catch { /* noop */ } finally {
       setSubmitting(false);
     }
   };

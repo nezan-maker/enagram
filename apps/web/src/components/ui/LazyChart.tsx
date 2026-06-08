@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react';
-import { Skeleton } from './Skeleton';
 
 interface LazyChartProps {
   children: React.ReactNode;

@@ -9,6 +9,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 /**
@@ -27,7 +28,7 @@ api.interceptors.request.use(
 
 /**
  * Response interceptor:
- * - On 401, attempt silent token refresh via /auth/refresh
+ * - On 401, attempt silent token refresh via /auth/refresh (httpOnly cookie)
  * - On second 401, force logout
  * - Standardize error shape
  */
@@ -69,12 +70,15 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { refreshToken } = useAuthStore.getState();
-        const response = await axios.post(`${API_BASE}/auth/refresh`, {
-          refreshToken,
-        });
+        // Refresh token is sent automatically via httpOnly cookie
+        const response = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
 
-        const { accessToken: newAccessToken } = response.data;
+        // Backend wraps response in ApiResponse format: { success, statusCode, message, data: { accessToken } }
+        const newAccessToken = response.data?.data?.accessToken;
+        if (!newAccessToken) {
+          throw new Error('No access token in refresh response');
+        }
+
         useAuthStore.getState().setTokens(newAccessToken);
         processQueue(null, newAccessToken);
 

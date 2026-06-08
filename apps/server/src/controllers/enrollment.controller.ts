@@ -12,8 +12,15 @@ export const createSingle = asyncHandler(async (req: AuthRequest, res: Response)
 
 export const bulkEnroll = asyncHandler(async (req: AuthRequest, res: Response) => {
   const restaurantId = (req.params.restaurantId as string || req.user!.restaurantId)!;
+  if (!req.file) {
+    res.status(400).json({ success: false, statusCode: 400, message: 'No file uploaded' });
+    return;
+  }
+  const fileType = req.file.mimetype || req.file.originalname || '';
+  const { parseEnrollmentFile } = await import('../utils/parseEnrollment.js');
+  const rows = await parseEnrollmentFile(req.file.buffer, fileType);
   const result = await svc.processBulkEnrollment(
-    req.body.rows,
+    rows,
     restaurantId,
     req.user!._id,
     req.user!.role
@@ -37,8 +44,8 @@ export const update = asyncHandler(async (req: AuthRequest, res: Response) => {
 });
 
 export const deactivate = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const data = await svc.deactivateStaff(req.params.restaurantId as string, req.params.userId as string);
-  res.json(ApiResponse(200, 'Staff deactivated', data));
+  const data = await svc.requestDeactivation(req.params.restaurantId as string, req.params.userId as string, req.user!._id);
+  res.json(ApiResponse(200, 'Deactivation request submitted', data));
 });
 
 export const getStaffId = asyncHandler(async (req: Request, res: Response) => {

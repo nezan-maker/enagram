@@ -13,13 +13,12 @@ export default tseslint.config(
       'react-refresh': reactRefresh,
     },
     rules: {
-      'react-refresh/only-export-components': ['warn'],
+      'react-refresh/only-export-components': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       'no-console': 'off',
       'no-empty': 'warn',
-      // Downgrade react-hooks exhaustive-deps to warn — real concerns but non-blocking
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
   {

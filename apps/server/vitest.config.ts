@@ -16,5 +16,9 @@ export default defineConfig({
     },
     fileParallelism: false,
     include: ['src/__tests__/**/*.test.ts'],
+    env: {
+      // Prevent vitest from auto-loading .env file which would override globalSetup values
+      NODE_ENV: 'test',
+    },
   },
 });

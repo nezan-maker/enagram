@@ -41,4 +41,7 @@ const issueSchema = new Schema<IIssue>({
   comments: [issueCommentSchema],
 }, { timestamps: true });
 
+issueSchema.index({ restaurantId: 1, status: 1 });
+issueSchema.index({ raisedBy: 1 });
+
 export const Issue = mongoose.model<IIssue>('Issue', issueSchema);

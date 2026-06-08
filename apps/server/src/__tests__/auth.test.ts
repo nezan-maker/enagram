@@ -4,25 +4,40 @@ import { app } from '../app.js';
 import { User } from '../models/User.model.js';
 
 describe('🔐 Auth Endpoints', () => {
+  // Strong password meeting all requirements: uppercase, digit, special char
+  const strongPwd = 'Password1!';
+
+  // Helper to extract cookies from response
+  const getCookie = (res: any, name: string) => {
+    const cookies = res.headers['set-cookie'];
+    if (!cookies) return null;
+    const cookie = cookies.find((c: string) => c.startsWith(`${name}=`));
+    if (!cookie) return null;
+    return cookie.split(';')[0].split('=')[1];
+  };
+
   // ── POST /api/v1/auth/register ────────────────────────
   describe('POST /api/v1/auth/register', () => {
     it('registers a new CLIENT user', async () => {
       const res = await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'new@test.com', password: 'password123!', firstName: 'New', lastName: 'User', role: 'CLIENT' });
+        .send({ email: 'new@test.com', password: strongPwd, firstName: 'New', lastName: 'User', role: 'CLIENT' });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.user).toBeDefined();
       expect(res.body.data.user.email).toBe('new@test.com');
       expect(res.body.data.accessToken).toBeDefined();
-      expect(res.body.data.refreshToken).toBeDefined();
+      // Refresh token is now in httpOnly cookie, not body
+      expect(res.body.data.refreshToken).toBeUndefined();
+      const cookie = getCookie(res, 'refreshToken');
+      expect(cookie).toBeTruthy();
     });
 
     it('registers an OWNER user', async () => {
       const res = await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'owner-new@test.com', password: 'password123!', firstName: 'Owner', lastName: 'User', role: 'OWNER' });
+        .send({ email: 'owner-new@test.com', password: strongPwd, firstName: 'Owner', lastName: 'User', role: 'OWNER' });
 
       expect(res.status).toBe(201);
       expect(res.body.data.user.role).toBe('OWNER');
@@ -31,11 +46,11 @@ describe('🔐 Auth Endpoints', () => {
     it('rejects duplicate email', async () => {
       await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'dup@test.com', password: 'password123!', firstName: 'Dup', lastName: 'User', role: 'CLIENT' });
+        .send({ email: 'dup@test.com', password: strongPwd, firstName: 'Dup', lastName: 'User', role: 'CLIENT' });
 
       const res = await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'dup@test.com', password: 'password123!', firstName: 'Dup', lastName: 'User', role: 'CLIENT' });
+        .send({ email: 'dup@test.com', password: strongPwd, firstName: 'Dup', lastName: 'User', role: 'CLIENT' });
 
       expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
@@ -44,7 +59,7 @@ describe('🔐 Auth Endpoints', () => {
     it('rejects invalid role', async () => {
       const res = await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'bad@test.com', password: 'password123!', firstName: 'Bad', lastName: 'User', role: 'INVALID' });
+        .send({ email: 'bad@test.com', password: strongPwd, firstName: 'Bad', lastName: 'User', role: 'INVALID' });
 
       expect(res.status).toBe(400);
     });
@@ -71,25 +86,28 @@ describe('🔐 Auth Endpoints', () => {
     it('logs in with valid credentials', async () => {
       await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'login@test.com', password: 'password123!', firstName: 'Login', lastName: 'User', role: 'CLIENT' });
+        .send({ email: 'login@test.com', password: strongPwd, firstName: 'Login', lastName: 'User', role: 'CLIENT' });
 
       const res = await request(app)
         .post('/api/v1/auth/login')
-        .send({ email: 'login@test.com', password: 'password123!' });
+        .send({ email: 'login@test.com', password: strongPwd });
 
       expect(res.status).toBe(200);
       expect(res.body.data.accessToken).toBeDefined();
-      expect(res.body.data.refreshToken).toBeDefined();
+      // Refresh token in httpOnly cookie, not body
+      expect(res.body.data.refreshToken).toBeUndefined();
+      const cookie = getCookie(res, 'refreshToken');
+      expect(cookie).toBeTruthy();
     });
 
     it('rejects wrong password', async () => {
       await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'wrongpw@test.com', password: 'password123!', firstName: 'Wrong', lastName: 'PW', role: 'CLIENT' });
+        .send({ email: 'wrongpw@test.com', password: strongPwd, firstName: 'Wrong', lastName: 'PW', role: 'CLIENT' });
 
       const res = await request(app)
         .post('/api/v1/auth/login')
-        .send({ email: 'wrongpw@test.com', password: 'wrongpassword' });
+        .send({ email: 'wrongpw@test.com', password: 'Wrongpass1!' });
 
       expect(res.status).toBe(401);
     });
@@ -97,7 +115,7 @@ describe('🔐 Auth Endpoints', () => {
     it('rejects non-existent email', async () => {
       const res = await request(app)
         .post('/api/v1/auth/login')
-        .send({ email: 'nobody@test.com', password: 'password123!' });
+        .send({ email: 'nobody@test.com', password: strongPwd });
 
       expect(res.status).toBe(401);
     });
@@ -108,25 +126,26 @@ describe('🔐 Auth Endpoints', () => {
     it('returns new tokens with valid refresh token', async () => {
       const reg = await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'refresh@test.com', password: 'password123!', firstName: 'Ref', lastName: 'Resh', role: 'CLIENT' });
+        .send({ email: 'refresh@test.com', password: strongPwd, firstName: 'Ref', lastName: 'Resh', role: 'CLIENT' });
 
-      const refreshToken = reg.body.data.refreshToken;
+      // Read refresh token from httpOnly cookie
+      const cookieHeader = reg.headers['set-cookie'];
 
       const res = await request(app)
         .post('/api/v1/auth/refresh')
-        .send({ refreshToken });
+        .set('Cookie', cookieHeader);
 
       expect(res.status).toBe(200);
       expect(res.body.data.accessToken).toBeDefined();
-      expect(res.body.data.refreshToken).toBeDefined();
-      // Token should be valid JWT (3 parts)
-      expect(res.body.data.refreshToken.split('.')).toHaveLength(3);
+      // New refresh token is also in httpOnly cookie
+      const newCookie = getCookie(res, 'refreshToken');
+      expect(newCookie).toBeTruthy();
     });
 
     it('rejects invalid refresh token', async () => {
       const res = await request(app)
         .post('/api/v1/auth/refresh')
-        .send({ refreshToken: 'invalid-token' });
+        .set('Cookie', ['refreshToken=invalid-token']);
 
       expect(res.status).toBe(401);
     });
@@ -137,7 +156,7 @@ describe('🔐 Auth Endpoints', () => {
     it('returns current user profile', async () => {
       const reg = await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'me@test.com', password: 'password123!', firstName: 'Me', lastName: 'User', role: 'CLIENT' });
+        .send({ email: 'me@test.com', password: strongPwd, firstName: 'Me', lastName: 'User', role: 'CLIENT' });
 
       const token = reg.body.data.accessToken;
 
@@ -161,14 +180,15 @@ describe('🔐 Auth Endpoints', () => {
     it('clears refresh token on logout', async () => {
       const reg = await request(app)
         .post('/api/v1/auth/register')
-        .send({ email: 'logout@test.com', password: 'password123!', firstName: 'Log', lastName: 'Out', role: 'CLIENT' });
+        .send({ email: 'logout@test.com', password: strongPwd, firstName: 'Log', lastName: 'Out', role: 'CLIENT' });
 
       const token = reg.body.data.accessToken;
       const userId = reg.body.data.user._id;
 
-      // Verify token exists before logout
+      // Verify token exists before logout (should be bcrypt hash)
       const userBefore = await User.findById(userId);
       expect(userBefore!.refreshToken).toBeDefined();
+      expect(userBefore!.refreshToken).not.toBeNull();
 
       // Logout
       const logoutRes = await request(app)
@@ -203,7 +223,7 @@ describe('🔐 Auth Endpoints', () => {
 
       const res = await request(app)
         .post('/api/v1/auth/staff/login')
-        .send({ staffId: 'STAFF001', password: 'newpassword123!' });
+        .send({ staffId: 'STAFF001', password: strongPwd });
 
       expect(res.status).toBe(200);
       expect(res.body.data.firstLogin).toBe(true);
@@ -216,7 +236,7 @@ describe('🔐 Auth Endpoints', () => {
     it('rejects invalid staff ID', async () => {
       const res = await request(app)
         .post('/api/v1/auth/staff/login')
-        .send({ staffId: 'NONEXIST', password: 'password123!' });
+        .send({ staffId: 'NONEXIST', password: strongPwd });
 
       expect(res.status).toBe(401);
     });
@@ -234,7 +254,7 @@ describe('🔐 Auth Endpoints', () => {
 
       const res = await request(app)
         .post('/api/v1/auth/staff/login')
-        .send({ staffId: 'STAFF002', password: 'password123!' });
+        .send({ staffId: 'STAFF002', password: strongPwd });
 
       expect(res.status).toBe(403);
     });

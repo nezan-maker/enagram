@@ -33,8 +33,8 @@ export const Register = () => {
       const res = await api.post('/auth/register', {
         email, password, firstName, lastName, role,
       });
-      const { user, accessToken, refreshToken } = res.data.data as { user: Record<string, unknown>; accessToken: string; refreshToken: string };
-      login({ user, accessToken, refreshToken });
+      const { user, accessToken } = res.data.data as { user: Record<string, unknown>; accessToken: string };
+      login({ user, accessToken });
       navigate(role === 'OWNER' ? '/owner/dashboard' : '/client/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');

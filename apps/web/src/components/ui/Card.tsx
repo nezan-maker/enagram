@@ -16,7 +16,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
  * - Optional interactive mode: hover elevate + focus ring
  * - Passes through div attributes (onClick, role, etc.)
  */
-export const Card = ({ children, className = '', variant = 'default', interactive = false, ...rest }: CardProps) => {
+export const Card = ({ children, className = '', interactive = false, ...rest }: CardProps) => {
   // No visible border by default — the dark gradient is enough
   const baseClasses = 'bg-gradient-to-br from-[#1b1b1c] to-[#131313] rounded-container';
   const interactiveClasses = interactive

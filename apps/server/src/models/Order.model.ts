@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { IOrderItem, orderItemSchema } from './OrderItem.model';
 
 export interface IOrder extends Document {
   restaurantId: Types.ObjectId;
@@ -21,30 +22,12 @@ export interface IOrder extends Document {
   updatedAt: Date;
 }
 
-export interface IOrderItem {
-  menuItemId: Types.ObjectId;
-  name: string;
-  price: number;
-  quantity: number;
-  notes?: string;
-  status: 'PENDING' | 'PREPARING' | 'READY';
-}
-
 interface IStatusEvent {
   status: string;
   changedBy: Types.ObjectId;
   changedAt: Date;
   note?: string;
 }
-
-const orderItemSchema = new Schema<IOrderItem>({
-  menuItemId: { type: Schema.Types.ObjectId, required: true },
-  name: { type: String, required: true },
-  price: { type: Number, required: true },
-  quantity: { type: Number, required: true },
-  notes: String,
-  status: { type: String, enum: ['PENDING', 'PREPARING', 'READY'], default: 'PENDING' },
-}, { _id: false });
 
 const statusEventSchema = new Schema<IStatusEvent>({
   status: { type: String, required: true },
@@ -71,5 +54,9 @@ const orderSchema = new Schema<IOrder>({
   notes: String,
   statusHistory: [statusEventSchema],
 }, { timestamps: true });
+
+orderSchema.index({ restaurantId: 1, status: 1 });
+orderSchema.index({ clientId: 1 });
+orderSchema.index({ waiterId: 1 });
 
 export const Order = mongoose.model<IOrder>('Order', orderSchema);

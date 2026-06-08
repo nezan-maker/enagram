@@ -20,7 +20,7 @@ export const OwnerDashboard = () => {
 
   useEffect(() => {
     preloadRecharts();
-    api.get('/restaurants')
+    api.get('/restaurants/owner/mine')
       .then((res) => {
         const data = res.data?.data || res.data || [];
         if (!Array.isArray(data)) { setLoading(false); return; }

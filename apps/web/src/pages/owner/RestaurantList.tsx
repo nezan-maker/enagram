@@ -13,7 +13,7 @@ export const RestaurantList = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    restaurantApi.list().then((res) => {
+    restaurantApi.listByOwner().then((res) => {
       setRestaurants(res.data?.data || []);
       setLoading(false);
     }).catch(() => setLoading(false));

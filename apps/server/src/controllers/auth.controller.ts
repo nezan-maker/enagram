@@ -5,11 +5,16 @@ import * as authService from '../services/auth.service.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { z } from 'zod';
 import { validate } from '../middleware/validate.js';
-import { env } from '../config/env.js';
+
+const strongPassword = z.string()
+  .min(8)
+  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character');
 
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: strongPassword,
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   role: z.enum(['CLIENT', 'OWNER']),
@@ -25,14 +30,30 @@ const staffLoginSchema = z.object({
   password: z.string().min(1),
 });
 
+const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7d in ms
+    path: '/api/v1/auth/refresh',
+  });
+};
+
+const clearRefreshTokenCookie = (res: Response) => {
+  res.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' });
+};
+
 export const register = [
   validate(registerSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { email, password, firstName, lastName, role } = req.body;
-    console.log('[REGISTER] Attempting:', { email, role });
     const result = await authService.register(email, password, firstName, lastName, role);
-    console.log('[REGISTER] Success:', result.user._id);
-    res.status(201).json(ApiResponse(201, 'Account created', result));
+    setRefreshTokenCookie(res, result.refreshToken);
+    res.status(201).json(ApiResponse(201, 'Account created', {
+      user: result.user,
+      accessToken: result.accessToken,
+    }));
   }),
 ];
 
@@ -41,7 +62,11 @@ export const login = [
   asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
-    res.status(200).json(ApiResponse(200, 'Login successful', result));
+    setRefreshTokenCookie(res, result.refreshToken);
+    res.status(200).json(ApiResponse(200, 'Login successful', {
+      user: result.user,
+      accessToken: result.accessToken,
+    }));
   }),
 ];
 
@@ -50,22 +75,31 @@ export const staffLoginCtrl = [
   asyncHandler(async (req: Request, res: Response) => {
     const { staffId, password } = req.body;
     const result = await authService.staffLogin(staffId, password);
-    res.status(200).json(ApiResponse(200, 'Staff login successful', result));
+    setRefreshTokenCookie(res, result.refreshToken);
+    res.status(200).json(ApiResponse(200, 'Staff login successful', {
+      user: result.user,
+      accessToken: result.accessToken,
+      firstLogin: result.firstLogin,
+    }));
   }),
 ];
 
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
-  if (!refreshToken) throw new Error('Refresh token required');
-  console.log('[REFRESH] token received:', refreshToken.substring(0, 30) + '...');
-  console.log('[REFRESH] env JWT_REFRESH_SECRET:', env.JWT_REFRESH_SECRET ? env.JWT_REFRESH_SECRET.substring(0, 20) + '...' : 'MISSING');
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) {
+    res.status(401).json({ success: false, statusCode: 401, message: 'Refresh token required' });
+    return;
+  }
   const tokens = await authService.refreshAuth(refreshToken);
-  console.log('[REFRESH] SUCCESS');
-  res.status(200).json(ApiResponse(200, 'Token refreshed', tokens));
+  setRefreshTokenCookie(res, tokens.refreshToken);
+  res.status(200).json(ApiResponse(200, 'Token refreshed', {
+    accessToken: tokens.accessToken,
+  }));
 });
 
 export const logout = asyncHandler(async (req: AuthRequest, res: Response) => {
   await authService.logout(req.user!._id);
+  clearRefreshTokenCookie(res);
   res.status(200).json(ApiResponse(200, 'Logged out', null));
 });
 

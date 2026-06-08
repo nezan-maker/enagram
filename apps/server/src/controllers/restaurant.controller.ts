@@ -11,6 +11,11 @@ export const list = asyncHandler(async (_req: Request, res: Response) => {
   res.json(ApiResponse(200, 'Restaurants fetched', data));
 });
 
+export const listByOwner = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await svc.listByOwner(req.user!._id);
+  res.json(ApiResponse(200, 'Restaurants fetched', data));
+});
+
 export const getOne = asyncHandler(async (req: Request, res: Response) => {
   const data = await svc.getById(req.params.id as string);
   res.json(ApiResponse(200, 'Restaurant fetched', data));

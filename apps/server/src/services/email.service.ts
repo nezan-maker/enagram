@@ -1,8 +1,12 @@
-// MailerSend wrapper for transactional emails
-// Uses MailerSend API (v3 SDK) — set MAILERSEND_API_KEY in env
-
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let mailerSend: MailerSend | null = null;
 
@@ -12,8 +16,31 @@ export const initEmail = () => {
   }
 };
 
-export const sendEmail = async (to: string, subject: string, html: string) => {
+/**
+ * Render an HTML template by replacing {{variable}} placeholders with provided values.
+ */
+export const renderTemplate = (templateName: string, vars: Record<string, string>): string => {
+  const templatePath = path.resolve(__dirname, '..', 'templates', 'email', `${templateName}.html`);
+  let html: string;
+  try {
+    html = fs.readFileSync(templatePath, 'utf-8');
+  } catch {
+    logger.error(`[Email] Template not found: ${templateName}.html`);
+    return '';
+  }
+  // Replace all {{key}} occurrences
+  for (const [key, value] of Object.entries(vars)) {
+    html = html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+  }
+  return html;
+};
+
+export const sendEmail = async (to: string, subject: string, htmlOrTemplate: string, vars?: Record<string, string>) => {
   if (!mailerSend) return;
+
+  // If vars are provided, treat htmlOrTemplate as a template name
+  const html = vars ? renderTemplate(htmlOrTemplate, vars) : htmlOrTemplate;
+  if (!html) return;
 
   // Parse "Name <email>" format from EMAIL_FROM
   const fromMatch = env.EMAIL_FROM.match(/^(.*?)\s*<(.+?)>$/);

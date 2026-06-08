@@ -3,11 +3,9 @@ import { useParams } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import api from '../../api/axios';
-import { useAuthStore } from '../../store/auth.store';
 
 export const ChefOrderDetail = () => {
   const { id } = useParams();
-  const { accessToken } = useAuthStore();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

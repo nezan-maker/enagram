@@ -10,6 +10,9 @@ const router = Router();
 router.get('/', ctrl.list);
 router.get('/:id', ctrl.getOne);
 
+// Owner-scoped: list only the authenticated owner's restaurants
+router.get('/owner/mine', authenticate, authorize('OWNER'), ctrl.listByOwner);
+
 // Owner+Deputy scoped
 router.post('/', authenticate, authorize('OWNER'), ctrl.create);
 router.patch('/:id', authenticate, authorize('OWNER', 'DEPUTY_MANAGER'), ctrl.update);

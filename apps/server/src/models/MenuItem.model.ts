@@ -1,24 +1,9 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
+import { IMenuItem } from '../types/menu.types';
 
-export interface IMenuItem extends Document {
-  menuId: Types.ObjectId;
-  restaurantId: Types.ObjectId;
-  name: string;
-  description?: string;
-  price: number;
-  category: string;
-  images?: string[];
-  isAvailable: boolean;
-  allergens?: string[];
-  preparationTimeMinutes?: number;
-  suggestedBy?: Types.ObjectId;
-  approvedBy?: Types.ObjectId;
-  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-  createdAt: Date;
-  updatedAt: Date;
-}
+export interface IMenuItemDocument extends IMenuItem, Document {}
 
-const menuItemSchema = new Schema<IMenuItem>({
+const menuItemSchema = new Schema<IMenuItemDocument>({
   menuId: { type: Schema.Types.ObjectId, ref: 'Menu', required: true },
   restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true },
   name: { type: String, required: true },
@@ -33,5 +18,8 @@ const menuItemSchema = new Schema<IMenuItem>({
   approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   approvalStatus: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED'], default: 'APPROVED' },
 }, { timestamps: true });
+
+menuItemSchema.index({ menuId: 1, approvalStatus: 1 });
+menuItemSchema.index({ restaurantId: 1 });
 
 export const MenuItem = mongoose.model<IMenuItem>('MenuItem', menuItemSchema);

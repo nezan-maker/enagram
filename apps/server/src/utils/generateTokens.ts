@@ -8,11 +8,11 @@ interface TokenPair {
 
 const encoder = new TextEncoder();
 
-export const generateTokens = async (userId: string, role: string): Promise<TokenPair> => {
+export const generateTokens = async (userId: string, role: string, restaurantId?: string): Promise<TokenPair> => {
   const accessSecret = encoder.encode(env.JWT_ACCESS_SECRET);
   const refreshSecret = encoder.encode(env.JWT_REFRESH_SECRET);
 
-  const accessToken = await new SignJWT({ _id: userId, role })
+  const accessToken = await new SignJWT({ _id: userId, role, restaurantId })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime(env.JWT_ACCESS_EXPIRY)
     .sign(accessSecret);

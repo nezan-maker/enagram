@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig();
+dotenvConfig({ override: false });
 import { z } from 'zod';
 
 const envSchema = z.object({

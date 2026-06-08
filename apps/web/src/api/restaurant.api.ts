@@ -2,6 +2,7 @@ import api from './axios';
 
 export const restaurantApi = {
   list: () => api.get('/restaurants'),
+  listByOwner: () => api.get('/restaurants/owner/mine'),
   getById: (id: string) => api.get(`/restaurants/${id}`),
   /** Fetch all and find by slug — server doesn't have a dedicated slug endpoint */
   getBySlug: async (slug: string) => {

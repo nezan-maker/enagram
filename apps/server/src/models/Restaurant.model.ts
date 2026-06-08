@@ -1,30 +1,7 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
+import { IRestaurant, IOpeningHours } from '../types/restaurant.types';
 
-export interface IRestaurant extends Document {
-  ownerId: Types.ObjectId;
-  name: string;
-  slug: string;
-  description?: string;
-  cuisineType?: string[];
-  logo?: string;
-  coverImage?: string;
-  address: { street: string; city: string; province: string; country: string; coordinates?: { lat: number; lng: number } };
-  contact: { phone: string; email?: string; website?: string };
-  openingHours?: IOpeningHours[];
-  isOpen: boolean;
-  isProfileComplete: boolean;
-  averageRating: number;
-  reviewCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface IOpeningHours {
-  day: string;
-  open: string;
-  close: string;
-  isClosed: boolean;
-}
+export interface IRestaurantDocument extends IRestaurant, Document {}
 
 const openingHoursSchema = new Schema<IOpeningHours>({
   day: { type: String, enum: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], required: true },
@@ -33,7 +10,7 @@ const openingHoursSchema = new Schema<IOpeningHours>({
   isClosed: { type: Boolean, default: false },
 }, { _id: false });
 
-const restaurantSchema = new Schema<IRestaurant>({
+const restaurantSchema = new Schema<IRestaurantDocument>({
   ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
@@ -65,5 +42,8 @@ restaurantSchema.pre('save', function () {
     this.slug = this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   }
 });
+
+restaurantSchema.index({ ownerId: 1 });
+restaurantSchema.index({ slug: 1 }, { unique: true });
 
 export const Restaurant = mongoose.model<IRestaurant>('Restaurant', restaurantSchema);

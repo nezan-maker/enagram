@@ -25,6 +25,7 @@ export const authenticate = async (req: AuthRequest, _res: Response, next: NextF
     req.user = {
       _id: payload._id as string,
       role: payload.role as string,
+      restaurantId: payload.restaurantId as string | undefined,
     };
 
     next();

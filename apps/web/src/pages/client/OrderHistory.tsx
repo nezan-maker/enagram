@@ -3,12 +3,10 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { StatusPill } from '../../components/ui/StatusPill';
 import api from '../../api/axios';
-import { useAuthStore } from '../../store/auth.store';
 
 export const OrderHistory = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     api.get('/orders/client/me')
@@ -16,7 +14,7 @@ export const OrderHistory = () => {
         const data = res.data.data;
         if (Array.isArray(data)) setOrders(data);
       })
-      .catch(() => {})
+      .catch(() => { /* noop */ })
       .finally(() => setLoading(false));
   }, []);
 

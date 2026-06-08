@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Logo } from '../../components/ui/Logo';
-import { Skeleton, SkeletonCardGrid } from '../../components/ui/Skeleton';
+import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { restaurantApi } from '../../api/restaurant.api';
 import { menuApi } from '../../api/menu.api';

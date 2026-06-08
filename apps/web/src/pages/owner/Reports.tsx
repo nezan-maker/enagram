@@ -6,10 +6,8 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { LazyChart, preloadRecharts } from '../../components/ui/LazyChart';
 import api from '../../api/axios';
-import { useAuthStore } from '../../store/auth.store';
 
 export const OwnerReports = () => {
-  const user = useAuthStore((s) => s.user);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -25,8 +25,8 @@ export const StaffLogin = () => {
     setLoading(true);
     try {
       const res = await api.post('/auth/staff/login', { staffId, password });
-      const { user, accessToken, refreshToken, firstLogin } = res.data.data;
-      login({ user, accessToken, refreshToken, restaurantId: user.restaurantId as string | undefined });
+      const { user, accessToken, firstLogin } = res.data.data;
+      login({ user, accessToken, restaurantId: user.restaurantId as string | undefined });
       if (firstLogin) {
         navigate('/auth/set-password');
       } else {

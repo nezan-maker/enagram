@@ -7,6 +7,10 @@ export const listPublic = async () => {
   return Restaurant.find({}).select('-__v').lean();
 };
 
+export const listByOwner = async (ownerId: string) => {
+  return Restaurant.find({ ownerId: new Types.ObjectId(ownerId) }).select('-__v').lean();
+};
+
 export const getById = async (id: string) => {
   const restaurant = await Restaurant.findById(id).lean();
   if (!restaurant) throw new ApiError(404, 'Restaurant not found');
