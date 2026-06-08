@@ -36,6 +36,7 @@ import { RestaurantProfile } from '../pages/owner/RestaurantProfile';
 import { OwnerReports } from '../pages/owner/Reports';
 import { Approvals } from '../pages/owner/Approvals';
 import { IssuesHub } from '../pages/owner/Issues';
+import StaffManagement from '../pages/owner/StaffManagement';
 
 // Deputy pages
 import { DeputyDashboard } from '../pages/deputy/DeputyDashboard';
@@ -146,6 +147,7 @@ export const AppRouter = () => {
           <Route path="restaurants" element={<RestaurantList />} />
           <Route path="restaurants/new" element={<RestaurantSetup />} />
           <Route path="restaurants/:id" element={<RestaurantProfile />} />
+          <Route path="staff" element={<StaffManagement />} />
           <Route path="approvals" element={<Approvals />} />
           <Route path="reports" element={<OwnerReports />} />
           <Route path="issues" element={<IssuesHub />} />
