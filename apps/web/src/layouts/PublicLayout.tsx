@@ -10,7 +10,7 @@ import { Footer } from '../components/ui/Footer';
 export const PublicLayout = () => {
   return (
     <div className="min-h-screen bg-surface text-on-surface flex flex-col">
-      <header className="h-14 bg-surface border-b border-white/5 flex items-center px-6 justify-between shrink-0" role="banner">
+      <header className="h-16 bg-surface border-b border-white/5 flex items-center px-6 justify-between shrink-0" role="banner">
         <Link to="/" className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm">
           <Logo size={22} className="text-primary-container" />
           <span className="text-headline-sm text-on-surface font-bold tracking-tight">Enagram</span>

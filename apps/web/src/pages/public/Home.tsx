@@ -79,9 +79,9 @@ export const Home = () => {
           <span className="inline-block text-label-caps tracking-[0.2em] text-primary-container bg-primary-container/10 px-4 py-2 rounded-full border border-primary-container/20">
             PREMIUM DISCOVERY SYSTEM
           </span>
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-on-surface leading-[1.1] tracking-tight">
-            Discover restaurants<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-container to-primary">that define the meal.</span>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-on-surface leading-[1.15] tracking-tight">
+            <span className="whitespace-nowrap">Discover restaurants</span><br />
+            <span className="whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-container to-primary">that define the meal.</span>
           </h1>
           <p className="text-body-lg md:text-headline-sm text-on-surface-variant/60 max-w-xl mx-auto">
             {cuisineTags.length} cuisines across {restaurants.length} venues.
