@@ -30,7 +30,7 @@ export const register = async (email: string, password: string, firstName: strin
   const hashedRefresh = await bcrypt.hash(tokens.refreshToken, REFRESH_TOKEN_HASH_ROUNDS);
   await User.updateOne({ _id: user._id }, { $set: { refreshToken: hashedRefresh } });
 
-  return { user: user.toObject(), ...tokens };
+  return { user: user.toObject() as unknown as Record<string, unknown>, ...tokens };
 };
 
 export const login = async (email: string, password: string): Promise<AuthResult> => {
@@ -46,7 +46,7 @@ export const login = async (email: string, password: string): Promise<AuthResult
   const hashedRefresh = await bcrypt.hash(tokens.refreshToken, REFRESH_TOKEN_HASH_ROUNDS);
   await User.updateOne({ _id: user._id }, { $set: { refreshToken: hashedRefresh } });
 
-  return { user: user.toObject(), ...tokens };
+  return { user: user.toObject() as unknown as Record<string, unknown>, ...tokens };
 };
 
 export const staffLogin = async (staffId: string, password: string): Promise<AuthResult> => {
@@ -66,7 +66,7 @@ export const staffLogin = async (staffId: string, password: string): Promise<Aut
     const hashedRefresh = await bcrypt.hash(tokens.refreshToken, REFRESH_TOKEN_HASH_ROUNDS);
     user.refreshToken = hashedRefresh;
     await user.save();
-    return { user: user.toObject(), ...tokens, firstLogin: true };
+    return { user: user.toObject() as unknown as Record<string, unknown>, ...tokens, firstLogin: true };
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -76,7 +76,7 @@ export const staffLogin = async (staffId: string, password: string): Promise<Aut
   const hashedRefresh = await bcrypt.hash(tokens.refreshToken, REFRESH_TOKEN_HASH_ROUNDS);
   await User.updateOne({ _id: user._id }, { $set: { refreshToken: hashedRefresh } });
 
-  return { user: user.toObject(), ...tokens };
+  return { user: user.toObject() as unknown as Record<string, unknown>, ...tokens };
 };
 
 export const refreshAuth = async (refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> => {

@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import { IOrderItem, orderItemSchema } from './OrderItem.model';
+import { IOrderItem, orderItemSchema } from './OrderItem.model.js';
 
 export interface IOrder extends Document {
   restaurantId: Types.ObjectId;

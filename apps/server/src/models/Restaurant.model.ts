@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { IRestaurant, IOpeningHours } from '../types/restaurant.types';
+import { IRestaurant, IOpeningHours } from '../types/restaurant.js';
+export type { IRestaurant };
 
 export interface IRestaurantDocument extends IRestaurant, Document {}
 

@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { IMenuItem } from '../types/menu.types';
+import { IMenuItem } from '../types/menu.js';
+export type { IMenuItem };
 
 export interface IMenuItemDocument extends IMenuItem, Document {}
 

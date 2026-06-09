@@ -1,9 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { IMenu } from '../types/menu.types';
+import { IMenu } from '../types/menu.js';
+export type { IMenu };
 
 export interface IMenuDocument extends IMenu, Document {}
 
-const menuSchema = new Schema<IMenuDocument>({
+const menuSchema = new Schema({
   restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true },
   name: { type: String, required: true },
   description: String,
@@ -12,4 +13,4 @@ const menuSchema = new Schema<IMenuDocument>({
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 
-export const Menu = mongoose.model<IMenu>('Menu', menuSchema);
+export const Menu = mongoose.model<IMenuDocument>('Menu', menuSchema);
