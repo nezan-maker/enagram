@@ -8,8 +8,15 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@11 --activate
 
+# Copy manifest files first
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+
+# 1. Install dependencies
+# 2. Approve the specific packages that need native builds
+# 3. Finish install (which will now run build scripts for approved packages)
+RUN pnpm install --frozen-lockfile --ignore-scripts && \
+    pnpm approve-builds esbuild mongodb-memory-server && \
+    pnpm install --frozen-lockfile
 
 COPY tsconfig.json ./
 COPY src/ ./src/
